@@ -279,18 +279,13 @@ def process_thread(args, request_queue, response_queue):
         # Unpack the incoming image.
         if request.input_data.image.format == image_pb2.Image.FORMAT_RAW:
             pil_image = Image.open(io.BytesIO(request.input_data.image.data))
-            if request.input_data.image.pixel_format == image_pb2.Image.PIXEL_FORMAT_GREYSCALE_U8:
                 # If the input image is grayscale, convert it to RGB.
-                image = cv2.cvtColor(pil_image, cv2.COLOR_GRAY2RGB)
+                # image = cv2.cvtColor(pil_image, cv2.COLOR_GRAY2RGB)
 
-            elif request.input_data.image.pixel_format == image_pb2.Image.PIXEL_FORMAT_RGB_U8:
+            # elif request.input_data.image.pixel_format == image_pb2.Image.PIXEL_FORMAT_RGB_U8:
                 # Already an RGB image.
-                image = pil_image
+            image = pil_image
 
-            else:
-                print('Error: image input in unsupported pixel format: ', request.input_data.image.pixel_format)
-                response_queue.put(out_proto)
-                continue
 
         elif request.input_data.image.format == image_pb2.Image.FORMAT_JPEG:
             dtype = np.uint8
@@ -327,8 +322,8 @@ def process_thread(args, request_queue, response_queue):
             box = detections[subimage]['bounding_box']
             label = detections[subimage]['labels']
 
-            if prob < request.input_data.min_confidence:
-                continue
+            # if prob < request.input_data.min_confidence:
+            #     continue
 
             # box = tuple(boxes[i].tolist())
 
