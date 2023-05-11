@@ -200,12 +200,8 @@ def classify_with_clip(image_file, sub_image_dir, object_detection_model, CLIP_m
     
 
 
-class TensorFlowObjectDetectionModel:
+class ObjectDetectionModel:
     def __init__(self):
-        # self.detect_fn = tf.saved_model.load(model_path)
-        # self.category_index = label_map_util.create_category_index_from_labelmap(label_path, use_display_name=True)
-        # self.name = os.path.basename(os.path.dirname(model_path))
-
         self.object_detection_model = load_object_detection_model()
         self.clip_model, self.clip_preprocessing = get_clip_model()
 
@@ -216,14 +212,10 @@ class TensorFlowObjectDetectionModel:
             os.mkdir(os.path.join(self.sub_image_dir))
 
     def predict(self, image):
-        # input_tensor = tf.convert_to_tensor(image)
-        # input_tensor = input_tensor[tf.newaxis, ...]
-        # detections = self.detect_fn(input_tensor)
-
         cv2.imwrite(self.image_path, image)
 
 
-        class_dict = {'striped ball': 0, 'swirly ball': 1, 'solid ball': 2}
+        class_dict = {'water bottle': 0, 'swirly ball': 1, 'lemon': 2}
 
         detections = classify_with_clip(self.image_path, self.sub_image_dir, self.object_detection_model, self.clip_model, self.clip_preprocessing, class_dict)
         
@@ -241,7 +233,7 @@ def process_thread(args, request_queue, response_queue):
     # Load the model(s)
     # models = {}
     # for model in args.model:
-    model = TensorFlowObjectDetectionModel()
+    model = ObjectDetectionModel()
         # models['Our_model'] = this_model
 
     # print('')

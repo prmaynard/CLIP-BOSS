@@ -319,22 +319,14 @@ def main(argv):
                 time.sleep(3)
                 dogtoy, image, vision_tform_dogtoy, label = get_obj_and_img(
                     network_compute_client, options.ml_service, options.model,
-                    options.confidence_dogtoy, kImageSources, ['striped ball', 'swirly ball', 'solid ball'])
+                    options.confidence_dogtoy, kImageSources, ['water bottle', 'swirly ball', 'lemon'])
                 
 
                 if dogtoy is None:
                     # Didn't find anything, keep searching.
                     continue
 
-                # If we have already dropped the toy off, make sure it has moved a sufficient amount before
-                # picking it up again
-                if vision_tform_hand_at_drop is not None and pose_dist(
-                        vision_tform_hand_at_drop, vision_tform_dogtoy) < 0.5:
-                    print('Found dogtoy, but it hasn\'t moved.  Waiting...')
-                    time.sleep(1)
-                    continue
-
-                print('Found dogtoy...')
+                print('Found object...')
 
                 # Got a dogtoy.  Request pick up.
 
@@ -448,27 +440,27 @@ def main(argv):
 
             # Move the arm to a carry position.
             print('')
-            print('Grasp finished, search for a person...')
+            print('Grasped object...')
             carry_cmd = RobotCommandBuilder.arm_carry_command()
             command_client.robot_command(carry_cmd)
 
             # Wait for the carry command to finish
             time.sleep(0.75)
-
-            # For now, we'll just exit...
-            print('')
-            print('Done for now, returning control to tablet in 5 seconds...')
             time.sleep(1.0)
 
-            if label == 'striped ball':
+            if label == 'water bottle':
                 drop(leftPosition, command_client)
             if label == 'swirly ball':
                 drop(boxPosition, command_client)
 
-            if label == 'solid ball':
+            if label == 'lemon':
                 drop(rightPosition, command_client)
 
             time.sleep(3)
+            
+            print('')
+            print('Performed action... Waiting for new object detection')
+            
             drop(returnPosition, command_client)
 
 
