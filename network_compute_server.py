@@ -192,8 +192,8 @@ def classify_with_clip(image_file, sub_image_dir, object_detection_model, CLIP_m
         for j, image_feature in enumerate(y_pred_8k_text_labels):
             return_dict[f'subimage_{j}']['labels'] = y_pred_8k_text_labels[j]
 
-    shutil.rmtree('C:\\\\Users\\Chace\\Downloads\\imgs')
-    os.mkdir(os.path.join('C:\\\\Users\\Chace\\Downloads\\imgs'))
+    shutil.rmtree('.\imgs')
+    os.mkdir(os.path.join('.\imgs'))
 
     return return_dict
 
@@ -209,8 +209,8 @@ class TensorFlowObjectDetectionModel:
         self.object_detection_model = load_object_detection_model()
         self.clip_model, self.clip_preprocessing = get_clip_model()
 
-        self.image_path = 'C:\\\\Users\\Chace\\Downloads\\img.jpg'
-        self.sub_image_dir = 'C:\\\\Users\\Chace\\Downloads\\imgs'
+        self.image_path = '.\img.jpg'
+        self.sub_image_dir = '.\imgs'
 
         if not os.path.exists(os.path.join(self.sub_image_dir)):
             os.mkdir(os.path.join(self.sub_image_dir))

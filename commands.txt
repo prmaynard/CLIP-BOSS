@@ -1,0 +1,3 @@
+python network_compute_server.py 138.16.161.21 (gouger)
+
+python fetch_only_pickup.py -s fetch-server -m clip-classifier 138.16.161.21
