@@ -105,7 +105,6 @@ def save_subimages(image, boxes):
         xmax = int(xmax.item())
         ymax = int(ymax.item())
 
-
         saved_bboxes.append([xmin, ymin, xmax, ymax])
         subimage = image.crop([xmin, ymin, xmax, ymax])
 
@@ -139,8 +138,6 @@ def classify_with_clip(image_file, sub_image_dir, object_detection_model, CLIP_m
 
     return_dict = {}
 
-    print(labels)
-
     for i, subimage in enumerate(subimages):
         return_dict[f'subimage_{i}'] = {}
         return_dict[f'subimage_{i}']['bounding_box'] = saved_bboxes[i]
@@ -163,34 +160,33 @@ def classify_with_clip(image_file, sub_image_dir, object_detection_model, CLIP_m
 
     with torch.no_grad():
 
-        image_features_8K = []
+        image_features_CLIP = []
         for item in os.listdir(sub_image_dir):
-            print(item)
             item_list.append(item)
             item = Image.open(os.path.join(sub_image_dir, item)).convert("RGB")
             image = preprocess(item)
 
             image_feature = model.encode_image(image.unsqueeze(0).cuda()).float()
             image_feature /= image_feature.norm(dim=-1, keepdim=True)
-            image_features_8K.append(image_feature)
+            image_features_CLIP.append(image_feature)
 
         text_features = model.encode_text(text_tokens).float()
         text_features /= text_features.norm(dim=-1, keepdim=True)
 
-        y_pred_8k = []
+        y_pred_CLIP = []
 
-        for j, image_feature in enumerate(image_features_8K):
+        for j, image_feature in enumerate(image_features_CLIP):
             print(j)
             text_probs = (100.0 * image_feature @ text_features.T).softmax(dim=-1)
             top_probs, top_labels = text_probs.cpu().topk(top_n, dim=-1)
             return_dict[f'subimage_{j}']['top_probs'] = text_probs.max().cpu()
 
-            y_pred_8k.append(top_labels)
+            y_pred_CLIP.append(top_labels)
 
-        y_pred_8k_text_labels = [CLASSES[int(y_pred_8k[i][0][0].cpu())] for i in range(len(y_pred_8k))]
+        y_pred_CLIP_text_labels = [CLASSES[int(y_pred_CLIP[i][0][0].cpu())] for i in range(len(y_pred_CLIP))]
 
-        for j, image_feature in enumerate(y_pred_8k_text_labels):
-            return_dict[f'subimage_{j}']['labels'] = y_pred_8k_text_labels[j]
+        for j, image_feature in enumerate(y_pred_CLIP_text_labels):
+            return_dict[f'subimage_{j}']['labels'] = y_pred_CLIP_text_labels[j]
 
     shutil.rmtree('.\imgs')
     os.mkdir(os.path.join('.\imgs'))
@@ -231,17 +227,10 @@ class ObjectDetectionModel:
 
 def process_thread(args, request_queue, response_queue):
     # Load the model(s)
-    # models = {}
-    # for model in args.model:
+
     model = ObjectDetectionModel()
-        # models['Our_model'] = this_model
 
-    # print('')
     print('Service ' + args.name + ' running on port: ' + str(args.port))
-
-    # print('Loaded models:')
-    # for model_name in models:
-        # print('    ' + model_name)
 
     while True:
         request = request_queue.get()
@@ -254,19 +243,6 @@ def process_thread(args, request_queue, response_queue):
             continue
         else:
             out_proto = network_compute_bridge_pb2.NetworkComputeResponse()
-
-        # Find the model
-        # if request.input_data.model_name not in models:
-        #     err_str = 'Cannot find model "' + request.input_data.model_name + '" in loaded models.'
-        #     print(err_str)
-
-        #      # Set the error in the header.
-        #     out_proto.header.error.code = header_pb2.CommonError.CODE_INVALID_REQUEST
-        #     out_proto.header.error.message = err_str
-        #     response_queue.put(out_proto)
-        #     continue
-
-        # model = models[request.input_data.model_name]
 
         # Unpack the incoming image.
         if request.input_data.image.format == image_pb2.Image.FORMAT_RAW:
@@ -296,53 +272,16 @@ def process_thread(args, request_queue, response_queue):
     
         num_objects = 0
 
-        # # All outputs are batches of tensors.
-        # # Convert to numpy arrays, and take index [0] to remove the batch dimension.
-        # # We're only interested in the first num_detections.
-        # num_detections = int(detections.pop('num_detections'))
-        # detections = {key: value[0, :num_detections].numpy()
-        #                for key, value in detections.items()}
-
-        # boxes = detections['detection_boxes']
-        # classes = detections['detection_classes']
-        # scores = detections['detection_scores']
-
 
         for subimage in detections.keys():
 
             prob = detections[subimage]['top_probs'].item()
             box = detections[subimage]['bounding_box']
             label = detections[subimage]['labels']
-
-            # if prob < request.input_data.min_confidence:
-            #     continue
-
-            # box = tuple(boxes[i].tolist())
-
-            # Boxes come in with normalized coordinates.  Convert to pixel values.
-            # box = [box[0] * image_width, box[1] * image_height, box[2] * image_width, box[3] * image_height]
-
-            # score = scores[i]
-
-            # if classes[i] in model.category_index.keys():
-            #     label = model.category_index[classes[i]]['name']
-            # else:
-            #     label = 'N/A'
-
-            # label = classes[i]
-
+            
             num_objects += 1
 
             print('Found object with label: "' + label + '" and score: ' + str(prob))
-
-
-            # p1 = (y_min, x_min)
-            # p2 = (y)
-
-            # point1 = np.array([box[1], box[0]])
-            # point2 = np.array([box[3], box[0]])
-            # point3 = np.array([box[3], box[2]])
-            # point4 = np.array([box[1], box[2]])
 
             point1 = np.array([box[1], box[0]])
             point2 = np.array([box[3], box[0]])
